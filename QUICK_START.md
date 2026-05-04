@@ -166,6 +166,8 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/db
 NEXT_PUBLIC_API_URL=http://localhost:3001
 JWT_SECRET=your_secret_key
 N8N_PASSWORD=admin123
+N8N_WEBHOOK_URL=http://localhost:5678
+OPENWEATHER_API_KEY=your_api_key_here
 ```
 
 ---

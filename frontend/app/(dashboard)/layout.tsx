@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import LogoutButton from '@/components/auth/LogoutButton'
 
 export default function DashboardLayout({
   children,
@@ -46,6 +47,11 @@ export default function DashboardLayout({
           <div className="mt-8 rounded-2xl bg-emerald-700/40 p-4 text-xs text-emerald-100">
             Panel operativo para predios, lotes y monitoreo en tiempo real.
           </div>
+          <div className="mt-6">
+            <LogoutButton
+              className="w-full rounded-full border border-emerald-200/40 px-4 py-2 text-xs font-semibold text-emerald-100/90 hover:bg-emerald-700/50"
+            />
+          </div>
         </div>
       </aside>
 
@@ -68,6 +74,10 @@ export default function DashboardLayout({
                 {item.label}
               </a>
             ))}
+            <LogoutButton
+              className="shrink-0 rounded-full border border-emerald-200/40 px-4 py-1 text-xs font-semibold text-[color:var(--ink-soft)]"
+              label="Salir"
+            />
           </div>
         </div>
       </header>

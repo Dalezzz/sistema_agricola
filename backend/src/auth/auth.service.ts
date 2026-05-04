@@ -38,6 +38,34 @@ export class AuthService {
     };
   }
 
+  async getUserFromToken(token: string | undefined) {
+    if (!token) {
+      return null;
+    }
+
+    try {
+      const payload = await this.jwtService.verifyAsync<{ sub: string }>(token);
+      if (!payload?.sub) {
+        return null;
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          createdAt: true,
+        },
+      });
+
+      return user ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   private async comparePassword(rawPassword: string, storedPassword: string) {
     if (!storedPassword) {
       return false;

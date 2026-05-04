@@ -2,11 +2,31 @@
   "name": "ingesta-clima",
   "nodes": [
     {
+      "parameters": {},
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [60, 300]
+    },
+    {
       "parameters": {
+        "method": "GET",
         "url": "https://api.openweathermap.org/data/2.5/weather",
-        "authentication": "generic",
-        "genericAuth": {
-          "user": "{{env.OPENWEATHER_API_KEY}}"
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "Cali,CO"
+            },
+            {
+              "name": "units",
+              "value": "metric"
+            },
+            {
+              "name": "appid",
+              "value": "={{$env.OPENWEATHER_API_KEY}}"
+            }
+          ]
         }
       },
       "name": "Fetch Climate Data",
@@ -18,6 +38,8 @@
       "parameters": {
         "method": "POST",
         "url": "http://backend:3001/webhooks/climate",
+        "contentType": "application/json",
+        "jsonParameters": true,
         "bodyParameters": {
           "parameters": [
             {
@@ -30,7 +52,11 @@
             },
             {
               "name": "precipitation",
-              "value": "={{$node[\"Fetch Climate Data\"].json.rain.\"1h\"}}"
+              "value": "={{$node[\"Fetch Climate Data\"].json.rain?.[\"1h\"] || 0}}"
+            },
+            {
+              "name": "windSpeed",
+              "value": "={{$node[\"Fetch Climate Data\"].json.wind?.speed || 0}}"
             }
           ]
         }
@@ -42,6 +68,9 @@
     }
   ],
   "connections": {
+    "Manual Trigger": {
+      "main": [[{"node": "Fetch Climate Data", "branch": 0, "type": "main", "index": 0}]]
+    },
     "Fetch Climate Data": {
       "main": [[{"node": "Send to Backend", "branch": 0, "type": "main", "index": 0}]]
     }

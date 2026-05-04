@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
@@ -27,8 +28,15 @@ async function proxyRequest(req: NextRequest) {
   }
 
   const response = await fetch(targetUrl, init);
-  return new Response(response.body, {
+  const nextResponse = new NextResponse(response.body, {
     status: response.status,
     headers: response.headers,
   });
+
+  const setCookie = response.headers.get('set-cookie');
+  if (setCookie) {
+    nextResponse.headers.set('set-cookie', setCookie);
+  }
+
+  return nextResponse;
 }

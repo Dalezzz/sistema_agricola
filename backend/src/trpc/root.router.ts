@@ -17,6 +17,16 @@ export const t = initTRPC.context<Context>().create();
 export const publicProcedure = t.procedure;
 export const protectedProcedure = t.procedure;
 
+const AUTH_COOKIE_NAME = 'access_token';
+
+const getCookieValue = (cookieHeader: string | undefined, name: string) => {
+  if (!cookieHeader) return undefined;
+  const cookies = cookieHeader.split(';').map((cookie) => cookie.trim());
+  const match = cookies.find((cookie) => cookie.startsWith(`${name}=`));
+  if (!match) return undefined;
+  return decodeURIComponent(match.slice(name.length + 1));
+};
+
 // Input schemas
 const idSchema = z.object({ id: z.string() });
 const emailPasswordSchema = z.object({ email: z.string().email(), password: z.string() });
@@ -51,13 +61,38 @@ export function createAppRouter(deps: RouterDependencies) {
     health: publicProcedure.query(() => ({ status: 'ok' })),
 
     auth: t.router({
-      login: publicProcedure.input(emailPasswordSchema).mutation(async ({ input }) => {
+      login: publicProcedure.input(emailPasswordSchema).mutation(async ({ input, ctx }) => {
         const user = await deps.authService.validateUser(input.email, input.password);
         if (!user) {
           return { access_token: null, user: null };
         }
+
         const token = await deps.authService.login(user);
+        ctx.res.cookie(AUTH_COOKIE_NAME, token.access_token, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+          path: '/',
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
         return { access_token: token.access_token, user };
+      }),
+      me: publicProcedure.query(async ({ ctx }) => {
+        const token = getCookieValue(ctx.req.headers.cookie, AUTH_COOKIE_NAME);
+        const user = await deps.authService.getUserFromToken(token);
+        return { user };
+      }),
+      logout: publicProcedure.mutation(async ({ ctx }) => {
+        ctx.res.cookie(AUTH_COOKIE_NAME, '', {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+          path: '/',
+          maxAge: 0,
+        });
+
+        return { status: 'ok' };
       }),
     }),
 
