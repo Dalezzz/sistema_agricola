@@ -7,7 +7,19 @@ const formatDate = (value?: string) =>
   value ? new Date(value).toLocaleDateString('es-ES') : 'N/D'
 
 export default function CultivosPage() {
-  const { data = [], isLoading } = trpc.crops.list.useQuery()
+  const cropsQuery = trpc.crops.list.useQuery()
+  const createCrop = trpc.crops.create.useMutation()
+  const rows = cropsQuery.data ?? []
+
+  const handleAddCrop = async () => {
+    const nextCropName = `Cultivo de ejemplo ${rows.length + 1}`
+    await createCrop.mutateAsync({
+      name: nextCropName,
+      type: 'Frutal',
+    })
+    await cropsQuery.refetch()
+    window.alert(`Se agregó ${nextCropName} en el backend`)
+  }
 
   return (
     <div className="space-y-6">
@@ -20,12 +32,15 @@ export default function CultivosPage() {
         title="Catalogo de cultivos"
         description="Tipos disponibles y lotes asociados."
         action={
-          <button className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+          <button
+            className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            onClick={handleAddCrop}
+          >
             + Nuevo cultivo
           </button>
         }
       >
-        {isLoading ? (
+        {cropsQuery.isLoading ? (
           <div className="text-sm text-[color:var(--ink-soft)]">Cargando cultivos...</div>
         ) : (
           <div className="overflow-x-auto">
@@ -39,7 +54,7 @@ export default function CultivosPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.map((crop: any) => (
+                {rows.map((crop: any) => (
                   <tr key={crop.id} className="border-b hover:bg-[color:var(--surface-muted)]">
                     <td className="px-4 py-3 font-medium">{crop.name}</td>
                     <td className="px-4 py-3 text-sm text-[color:var(--ink-soft)]">{crop.type}</td>
@@ -49,7 +64,7 @@ export default function CultivosPage() {
                 ))}
               </tbody>
             </table>
-            {!data.length && (
+            {!rows.length && (
               <div className="p-4 text-sm text-[color:var(--ink-soft)]">No hay cultivos registrados.</div>
             )}
           </div>

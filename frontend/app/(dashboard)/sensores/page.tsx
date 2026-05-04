@@ -6,16 +6,87 @@ import { trpc } from '@/lib/trpc/react'
 const formatDate = (value?: string) =>
   value ? new Date(value).toLocaleDateString('es-ES') : 'N/D'
 
-const getLatestReading = (readings?: any[]) => {
-  if (!readings?.length) return null
-  return readings.reduce((latest, current) => {
-    if (!latest) return current
-    return new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
-  }, readings[0])
+type SensorRow = {
+  id: string
+  name: string
+  type: string
+  farm: string
+  plot: string
+  latestReading: string
 }
 
 export default function SensoresPage() {
-  const { data = [], isLoading } = trpc.sensors.listAll.useQuery()
+  const usersQuery = trpc.users.list.useQuery()
+  const farmsQuery = trpc.farms.listAll.useQuery()
+  const plotsQuery = trpc.plots.listAll.useQuery()
+  const sensorsQuery = trpc.sensors.listAll.useQuery()
+  const createUser = trpc.users.create.useMutation()
+  const createFarm = trpc.farms.create.useMutation()
+  const createSensor = trpc.sensors.create.useMutation()
+  const addReading = trpc.sensors.addReading.useMutation()
+
+  const rows: SensorRow[] = (sensorsQuery.data ?? []).map((sensor: any) => {
+    const latestReading = [...(sensor.readings ?? [])].sort(
+      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    )[0]
+
+    return {
+      id: sensor.id,
+      name: sensor.name,
+      type: sensor.type,
+      farm: sensor.farmId,
+      plot: sensor.plotId || 'N/D',
+      latestReading: latestReading
+        ? `${latestReading.value} ${latestReading.unit} (${formatDate(latestReading.createdAt)})`
+        : 'Sin datos',
+    }
+  })
+
+  const ensureFarmId = async () => {
+    const existingFarm = farmsQuery.data?.[0]
+    if (existingFarm) return existingFarm.id
+
+    const existingOwner = usersQuery.data?.[0]
+    const ownerId =
+      existingOwner?.id ??
+      (await createUser.mutateAsync({
+        firstName: 'Demo',
+        lastName: 'Owner',
+        email: `owner-${Date.now()}@demo.com`,
+        password: 'demo1234',
+      })).id
+
+    const createdFarm = await createFarm.mutateAsync({
+      name: 'Predio sensores',
+      location: 'Cali, Valle del Cauca',
+      area: 22,
+      ownerId,
+    })
+
+    await farmsQuery.refetch()
+    return createdFarm.id
+  }
+
+  const handleAddSensor = async () => {
+    const farmId = await ensureFarmId()
+    const plotId = plotsQuery.data?.[0]?.id
+
+    const createdSensor = await createSensor.mutateAsync({
+      name: `Sensor de ejemplo ${rows.length + 1}`,
+      type: 'Humedad',
+      farmId,
+      ...(plotId ? { plotId } : {}),
+    })
+
+    await addReading.mutateAsync({
+      sensorId: createdSensor.id,
+      value: 64,
+      unit: '%',
+    })
+
+    await sensorsQuery.refetch()
+    window.alert(`Se agregó ${createdSensor.name} en el backend`)
+  }
 
   return (
     <div className="space-y-6">
@@ -28,12 +99,15 @@ export default function SensoresPage() {
         title="Sensores activos"
         description="Ultimas lecturas y ubicacion en predios/lotes."
         action={
-          <button className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+          <button
+            className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            onClick={handleAddSensor}
+          >
             + Nuevo sensor
           </button>
         }
       >
-        {isLoading ? (
+        {sensorsQuery.isLoading || farmsQuery.isLoading || plotsQuery.isLoading || usersQuery.isLoading ? (
           <div className="text-sm text-[color:var(--ink-soft)]">Cargando sensores...</div>
         ) : (
           <div className="overflow-x-auto">
@@ -48,23 +122,18 @@ export default function SensoresPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.map((sensor: any) => {
-                  const latest = getLatestReading(sensor.readings)
-                  return (
-                    <tr key={sensor.id} className="border-b hover:bg-[color:var(--surface-muted)]">
-                      <td className="px-4 py-3 font-medium">{sensor.name}</td>
-                      <td className="px-4 py-3 text-sm text-[color:var(--ink-soft)]">{sensor.type}</td>
-                      <td className="px-4 py-3 text-sm">{sensor.farmId}</td>
-                      <td className="px-4 py-3 text-sm">{sensor.plotId || 'N/D'}</td>
-                      <td className="px-4 py-3 text-sm">
-                        {latest ? `${latest.value} ${latest.unit} (${formatDate(latest.createdAt)})` : 'Sin datos'}
-                      </td>
-                    </tr>
-                  )
-                })}
+                {rows.map((sensor) => (
+                  <tr key={sensor.id} className="border-b hover:bg-[color:var(--surface-muted)]">
+                    <td className="px-4 py-3 font-medium">{sensor.name}</td>
+                    <td className="px-4 py-3 text-sm text-[color:var(--ink-soft)]">{sensor.type}</td>
+                    <td className="px-4 py-3 text-sm">{sensor.farm}</td>
+                    <td className="px-4 py-3 text-sm">{sensor.plot}</td>
+                    <td className="px-4 py-3 text-sm">{sensor.latestReading}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
-            {!data.length && (
+            {!rows.length && (
               <div className="p-4 text-sm text-[color:var(--ink-soft)]">No hay sensores registrados.</div>
             )}
           </div>

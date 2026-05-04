@@ -1,3 +1,5 @@
+"use client"
+
 type LoteRow = {
   id: string
   nombre: string
@@ -8,9 +10,11 @@ type LoteRow = {
 
 type LoteTableProps = {
   lotes: LoteRow[]
+  onEdit?: (lote: LoteRow) => void
+  onDelete?: (lote: LoteRow) => void
 }
 
-export default function LoteTable({ lotes }: LoteTableProps) {
+export default function LoteTable({ lotes, onEdit, onDelete }: LoteTableProps) {
 
   return (
     <div className="panel rounded-2xl overflow-hidden">
@@ -36,8 +40,12 @@ export default function LoteTable({ lotes }: LoteTableProps) {
                 </span>
               </td>
               <td className="px-6 py-4 space-x-2">
-                <button className="text-blue-600 hover:underline">Editar</button>
-                <button className="text-red-600 hover:underline">Eliminar</button>
+                <button type="button" className="text-blue-600 hover:underline" onClick={() => onEdit?.(lote)}>
+                  Editar
+                </button>
+                <button type="button" className="text-red-600 hover:underline" onClick={() => onDelete?.(lote)}>
+                  Eliminar
+                </button>
               </td>
             </tr>
           ))}

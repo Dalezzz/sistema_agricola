@@ -1,3 +1,5 @@
+"use client"
+
 type ReporteRow = {
   id: string
   titulo: string
@@ -7,9 +9,11 @@ type ReporteRow = {
 
 type ReporteListProps = {
   reportes: ReporteRow[]
+  onView?: (reporte: ReporteRow) => void
+  onDownload?: (reporte: ReporteRow) => void
 }
 
-export default function ReporteList({ reportes }: ReporteListProps) {
+export default function ReporteList({ reportes, onView, onDownload }: ReporteListProps) {
 
   return (
     <div className="panel rounded-2xl overflow-hidden">
@@ -29,8 +33,12 @@ export default function ReporteList({ reportes }: ReporteListProps) {
               <td className="px-6 py-4">{reporte.tipo}</td>
               <td className="px-6 py-4">{reporte.fecha}</td>
               <td className="px-6 py-4 space-x-2">
-                <button className="text-blue-600 hover:underline">Ver</button>
-                <button className="text-green-600 hover:underline">Descargar PDF</button>
+                <button type="button" className="text-blue-600 hover:underline" onClick={() => onView?.(reporte)}>
+                  Ver
+                </button>
+                <button type="button" className="text-green-600 hover:underline" onClick={() => onDownload?.(reporte)}>
+                  Descargar PDF
+                </button>
               </td>
             </tr>
           ))}
