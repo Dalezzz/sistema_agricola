@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  farms     Farm[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Farm {
+  id        String   @id @default(cuid())
+  name      String
+  location  String
+  area      Float
+  owner     User     @relation(fields: [ownerId], references: [id])
+  ownerId   String
+  plots     Plot[]
+  sensors   Sensor[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Plot {
+  id        String   @id @default(cuid())
+  name      String
+  area      Float
+  farm      Farm     @relation(fields: [farmId], references: [id])
+  farmId    String
+  crop      Crop?    @relation(fields: [cropId], references: [id])
+  cropId    String?
+  sensors   Sensor[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Crop {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  plots     Plot[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Sensor {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  farm      Farm     @relation(fields: [farmId], references: [id])
+  farmId    String
+  plot      Plot?    @relation(fields: [plotId], references: [id])
+  plotId    String?
+  readings  SensorReading[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SensorReading {
+  id        String   @id @default(cuid())
+  sensor    Sensor   @relation(fields: [sensorId], references: [id])
+  sensorId  String
+  value     Float
+  unit      String
+  createdAt DateTime @default(now())
+}
+
+model IrrigationEvent {
+  id        String   @id @default(cuid())
+  plotId    String
+  duration  Int
+  waterUsed Float
+  createdAt DateTime @default(now())
+}
+
+model WeatherData {
+  id            String   @id @default(cuid())
+  temperature   Float
+  humidity      Float
+  precipitation Float
+  windSpeed     Float
+  createdAt     DateTime @default(now())
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  type      String
+  createdAt DateTime @default(now())
+}
+
+model Prediction {
+  id        String   @id @default(cuid())
+  plotId    String
+  cropYield Float
+  confidence Float
+  createdAt DateTime @default(now())
+}

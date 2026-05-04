@@ -1,0 +1,49 @@
+{
+  "name": "ingesta-clima",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.openweathermap.org/data/2.5/weather",
+        "authentication": "generic",
+        "genericAuth": {
+          "user": "{{env.OPENWEATHER_API_KEY}}"
+        }
+      },
+      "name": "Fetch Climate Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:3001/webhooks/climate",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "temperature",
+              "value": "={{$node[\"Fetch Climate Data\"].json.main.temp}}"
+            },
+            {
+              "name": "humidity",
+              "value": "={{$node[\"Fetch Climate Data\"].json.main.humidity}}"
+            },
+            {
+              "name": "precipitation",
+              "value": "={{$node[\"Fetch Climate Data\"].json.rain.\"1h\"}}"
+            }
+          ]
+        }
+      },
+      "name": "Send to Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    }
+  ],
+  "connections": {
+    "Fetch Climate Data": {
+      "main": [[{"node": "Send to Backend", "branch": 0, "type": "main", "index": 0}]]
+    }
+  }
+}

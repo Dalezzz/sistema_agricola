@@ -1,0 +1,55 @@
+{
+  "name": "generacion-reporte",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://backend:3001/api/trpc/reports.list",
+        "authentication": "generic"
+      },
+      "name": "Get Report Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "dataPropertyName": "data",
+        "templateFields": {
+          "fields": [
+            {
+              "name": "title",
+              "value": "Reporte Mensual"
+            },
+            {
+              "name": "date",
+              "value": "={{$now.toLocaleDateString()}}"
+            }
+          ]
+        }
+      },
+      "name": "Format Report",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileName": "reporte_{{$now.toLocaleDateString()}}.pdf"
+      },
+      "name": "Generate PDF",
+      "type": "n8n-nodes-base.pdf",
+      "typeVersion": 1,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Get Report Data": {
+      "main": [[{"node": "Format Report", "branch": 0, "type": "main", "index": 0}]]
+    },
+    "Format Report": {
+      "main": [[{"node": "Generate PDF", "branch": 0, "type": "main", "index": 0}]]
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "name": "prediccion-rendimiento",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://ml-service:8000/predict",
+        "sendData": "body",
+        "contentType": "application/json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "plot_id",
+              "value": "={{$node[\"Input Data\"].json.plot_id}}"
+            },
+            {
+              "name": "temperature",
+              "value": "={{$node[\"Input Data\"].json.temperature}}"
+            },
+            {
+              "name": "humidity",
+              "value": "={{$node[\"Input Data\"].json.humidity}}"
+            }
+          ]
+        }
+      },
+      "name": "Call ML Service",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:3001/api/trpc/predictions.create",
+        "contentType": "application/json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "plot_id",
+              "value": "={{$node[\"Call ML Service\"].json.plot_id}}"
+            },
+            {
+              "name": "crop_yield",
+              "value": "={{$node[\"Call ML Service\"].json.prediction}}"
+            },
+            {
+              "name": "confidence",
+              "value": "={{$node[\"Call ML Service\"].json.confidence}}"
+            }
+          ]
+        }
+      },
+      "name": "Save Prediction",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    }
+  ],
+  "connections": {
+    "Call ML Service": {
+      "main": [[{"node": "Save Prediction", "branch": 0, "type": "main", "index": 0}]]
+    }
+  }
+}
