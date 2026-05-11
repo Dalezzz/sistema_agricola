@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function proxyRequest(req: NextRequest) {
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3031';
   const targetUrl = `${backendUrl}${req.nextUrl.pathname}${req.nextUrl.search}`;
   const headers = new Headers(req.headers);
   headers.delete('host');

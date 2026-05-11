@@ -19,7 +19,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3030',
     credentials: true,
   });
 
@@ -46,7 +46,7 @@ async function bootstrap() {
 
   void app.get(PrismaService);
 
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 3031;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
 }

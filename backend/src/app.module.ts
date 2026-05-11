@@ -11,7 +11,6 @@ import { IrrigationModule } from './irrigation/irrigation.module';
 import { PredictionsModule } from './predictions/predictions.module';
 import { ReportsModule } from './reports/reports.module';
 import { CommonModule } from './common/common.module';
-import { WebhookController } from './common/webhook.controller';
 import { WeatherModule } from './weather/weather.module';
 
 @Module({
@@ -32,7 +31,6 @@ import { WeatherModule } from './weather/weather.module';
     ReportsModule,
     WeatherModule,
   ],
-  controllers: [WebhookController],
   providers: [],
 })
 export class AppModule {}
